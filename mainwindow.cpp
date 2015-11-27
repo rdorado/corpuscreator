@@ -6,6 +6,9 @@
 #include <QFileDialog>
 #include <QTextStream>
 #include <QMessageBox>
+#include <QStringListModel>
+#include <QDirIterator>
+#include <QModelIndex>
 
 #include <iostream>
 using namespace std;
@@ -16,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     updateWindow(document);
+
 }
 
 MainWindow::~MainWindow()
@@ -56,16 +60,28 @@ void MainWindow::on_actionSave_as_triggered()
 
 void MainWindow::on_actionOpen_triggered()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), QString(), tr(""));  //tr("Text Files (*.txt);;C++ Files (*.cpp *.h)")
+    //QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"), QString(), tr(""));  //tr("Text Files (*.txt);;C++ Files (*.cpp *.h)")
+
+    QString fileName = QFileDialog::getExistingDirectory(this, tr("Open File"));
+
     if (!fileName.isEmpty()) {
-         QFile file(fileName);
-         if (!file.open(QIODevice::ReadOnly)) {
-              QMessageBox::critical(this, tr("Error"), tr("Could not open file"));
-              return;
+
+
+
+        //  QStringList*
+        stringList = new QStringList();
+
+        QDirIterator it(fileName, QDirIterator::Subdirectories);
+         while (it.hasNext()) {
+             stringList->append(it.next());
+             //qDebug() << it.next();
          }
-         QTextStream in(&file);
-         ui->textEdit->setText(in.readAll());
-         file.close();
+         QStringListModel *listModel = new QStringListModel(*stringList, NULL);
+         ui->listView->setModel(listModel);
+
+
+
+
     }
 
 
@@ -85,4 +101,23 @@ void MainWindow::on_actionFind_triggered()
     find->setWindowModality(Qt::ApplicationModal);
     find->show();
 
+}
+
+void MainWindow::on_listView_clicked(const QModelIndex &index)
+{
+
+   //stringList->at(index.row());
+   //QModelIndex index = model->index(index.row());
+
+    QString fileName = stringList->at(index.row());
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly)) {
+         QMessageBox::critical(this, tr("Error"), tr("Could not open file"));
+         return;
+    }
+    QTextStream in(&file);
+    ui->textEdit->setText(in.readAll());
+    file.close();
+
+   //QMessageBox::critical(this, tr("Error"),     );
 }
