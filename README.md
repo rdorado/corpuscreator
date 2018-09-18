@@ -1,1 +1,1 @@
-# lincs-corpuscreator
+# corpuscreator
